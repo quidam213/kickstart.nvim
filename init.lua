@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -207,6 +207,48 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
+
+-- Force 4 spaces everywhere
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = '*',
+  callback = function()
+    vim.opt_local.expandtab = true
+    vim.opt_local.shiftwidth = 4
+    vim.opt_local.tabstop = 4
+    vim.opt_local.softtabstop = 4
+  end,
+})
+
+-- Delete trailing spaces + add a newline at the end of a file
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = '*',
+  callback = function()
+    local pos = vim.api.nvim_win_get_cursor(0)
+    vim.cmd [[%s/\s\+$//e]]
+    vim.api.nvim_win_set_cursor(0, pos)
+  end,
+})
+
+vim.o.fixendofline = true
+
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = '*',
+  callback = function()
+    local buf = vim.api.nvim_get_current_buf()
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, true)
+
+    if #lines == 0 then
+      -- Buffer vide → ajoute une ligne
+      vim.api.nvim_buf_set_lines(buf, 0, -1, true, { '' })
+      return
+    end
+
+    -- Si la dernière ligne n'est pas vide → ajoute une newline
+    if lines[#lines] ~= '' then
+      vim.api.nvim_buf_set_lines(buf, -1, -1, true, { '' })
+    end
+  end,
+})
 
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
